@@ -9,7 +9,7 @@ function property($property)
 {
     $place = '';
     if ($property['place_prop'] != '') {
-        $place = '<div class="field-help">' . $property['place_prop'] . '</div>';
+        $place = '<div class="field-help">' . htmlspecialchars($property['place_prop'], ENT_QUOTES, 'UTF-8') . '</div>';
     }
 
     $idProp = $property['id'];
@@ -17,9 +17,9 @@ function property($property)
 
     if ($property['type_prop'] == '1') {
         $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
-            <div class="field-label name">' . $property['name_prop'] . '</div>
+            <div class="field-label name">' . htmlspecialchars($property['name_prop'], ENT_QUOTES, 'UTF-8') . '</div>
             ' . $place . '
-            <input type="text" class="text-input add-inp ag_pole_good" placeholder="' . $property['name_prop'] . '">
+            <input type="text" class="text-input add-inp ag_pole_good" placeholder="' . htmlspecialchars($property['name_prop'], ENT_QUOTES, 'UTF-8') . '">
         </div>';
     } elseif ($property['type_prop'] == '2') {
         $answers = db()->query(
@@ -27,11 +27,11 @@ function property($property)
         );
 
         while ($answer = $answers->fetch()) {
-            $allOption .= '<option value="' . $answer['id'] . '">' . $answer['answer_prop'] . '</option>';
+            $allOption .= '<option value="' . $answer['id'] . '">' . htmlspecialchars($answer['answer_prop'], ENT_QUOTES, 'UTF-8') . '</option>';
         }
 
         $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
-            <div class="field-label name">' . $property['name_prop'] . '</div>
+            <div class="field-label name">' . htmlspecialchars($property['name_prop'], ENT_QUOTES, 'UTF-8') . '</div>
             ' . $place . '
             <select class="text-input ag_pole_good">
                 <option value="">Не выбрано</option>' . $allOption . '
@@ -46,12 +46,12 @@ function property($property)
         while ($answer = $answers->fetch()) {
             $checkboxes .= '<label class="choice line_chek">
                 <input type="checkbox">
-                <span class="ckeck_param" data-val="' . $answer['id'] . '">' . $answer['answer_prop'] . '</span>
+                <span class="ckeck_param" data-val="' . $answer['id'] . '">' . htmlspecialchars($answer['answer_prop'], ENT_QUOTES, 'UTF-8') . '</span>
             </label>';
         }
 
         $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
-            <div class="field-label name">' . $property['name_prop'] . '</div>
+            <div class="field-label name">' . htmlspecialchars($property['name_prop'], ENT_QUOTES, 'UTF-8') . '</div>
             ' . $place . '
             <div class="choice-grid checkbox_property ag_pole_good">' . $checkboxes . '</div>
         </div>';
@@ -62,20 +62,39 @@ function property($property)
     return $result;
 }
 
-$category = isset($_POST['category']) ? $_POST['category'] : array();
-$result = '';
-
-// Legacy-алгоритм намеренно содержит несколько связанных ошибок.
-if (is_array($category)) {
-    foreach ($category as $categoryId) {
-        $properties = db()->query(
-            "SELECT * FROM property_s WHERE cat_prop LIKE '%" . $categoryId . "%' ORDER BY sort_prop"
-        );
-
-        while ($property = $properties->fetch()) {
-            $result .= property($property);
+// Получить запрос для выбора свойств
+function createQuery(array $categories)
+{
+    $query = "SELECT * FROM property_s WHERE cat_prop = ''";
+    
+    if (!empty($categories)) {
+        foreach ($categories as $categoryId) {
+            $categoryId = (int) $categoryId;
+            if ($categoryId > 0) {
+                $query .= " OR FIND_IN_SET(" . $categoryId . ", cat_prop) > 0";
+            }
         }
     }
+
+    $query .= " ORDER BY sort_prop";
+
+    return $query;
 }
+
+$category = isset($_POST['category']) && is_array($_POST['category']) 
+    ? $_POST['category'] 
+    : array();
+
+$result = '';
+
+$properties = db()->query(createQuery($category));
+
+while ($property = $properties->fetch()) {
+    $result .= property($property);
+}
+
+echo '<code>$_POST:<br>';
+print_r($_POST);
+echo '<br><hr></code>';
 
 echo $result === '' ? 'no' : $result;
