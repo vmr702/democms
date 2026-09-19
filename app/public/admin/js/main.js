@@ -11,15 +11,31 @@
         return cats;
     }
 
-    // Фрагмент упрощён из legacy main.js. Сейчас он неверно собирает часть типов полей.
+    // Собирает значения свойств для проврочного payload.
     function collectPropertyValues() {
         var propertyMas = {};
 
         $('.name_select_rielt').each(function () {
-            var propertyId = $(this).attr('data-property');
-            var value = $(this).find('input.ag_pole_good, select.ag_pole_good').first().val();
+            var $property = $(this);
+            var propertyId = $property.attr('data-property');
+            // Собираем ID отмеченных вариантов мультивыбора.
+            var value = $property.find('input[type="checkbox"]:checked')
+                .map(function () {
+                    return $(this).siblings('.ckeck_param').attr('data-val');
+                })
+                .get()
+                .join(':::');
+
+            if (value === '') {
+                // Берём значение обычного input или одиночного select.
+                value = $property
+                    .find('input.ag_pole_good, select.ag_pole_good')
+                    .first()
+                    .val();
+            }
 
             if (value !== undefined && value !== '') {
+                // Сохраняем только заполненные характеристики, включая 0.
                 propertyMas[propertyId] = value;
             }
         });

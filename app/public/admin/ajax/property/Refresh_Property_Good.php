@@ -55,6 +55,12 @@ function property($property)
             ' . $place . '
             <div class="choice-grid checkbox_property ag_pole_good">' . $checkboxes . '</div>
         </div>';
+    } elseif ($property['type_prop'] == '4') {
+        $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
+            <div class="field-label name">' . htmlspecialchars($property['name_prop'], ENT_QUOTES, 'UTF-8') . '</div>
+            ' . $place . '
+            <input type="number" class="text-input add-inp ag_pole_good" min="0" placeholder="' . htmlspecialchars($property['name_prop'], ENT_QUOTES, 'UTF-8') . '">
+        </div>';
     } else {
         $result = '';
     }
@@ -92,9 +98,5 @@ $properties = db()->query(createQuery($category));
 while ($property = $properties->fetch()) {
     $result .= property($property);
 }
-
-echo '<code>$_POST:<br>';
-print_r($_POST);
-echo '<br><hr></code>';
 
 echo $result === '' ? 'no' : $result;
